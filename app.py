@@ -17,8 +17,8 @@ load_dotenv()
 
 EMBEDDING_MODEL = "models/gemini-embedding-001"
 LLM_MODELS = [
-    "gemini-3.6-flash",
     "gemini-3.5-flash",
+    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.8-flash",
 ]
@@ -99,15 +99,19 @@ def answer_question(question: str, vector_store: FAISS, api_key: str) -> str:
                 model=model_name,
                 google_api_key=api_key,
                 temperature=0.2,
+                timeout=20,
                 max_retries=1,
             )
             chain = prompt | llm | StrOutputParser()
             return chain.invoke({"context": context, "question": question})
         except Exception as exc:
             last_error = exc
-            error_text = str(exc)
-            # Fall back to the next model on transient overload/availability errors
-            if any(code in error_text for code in ("503", "UNAVAILABLE", "404", "NOT_FOUND", "429")):
+            error_text = str(exc).lower()
+            # Fall back to the next model on transient overload/timeout/availability errors
+            if any(
+                code in error_text
+                for code in ("503", "unavailable", "504", "deadline_exceeded", "timeout", "timed out", "404", "not_found", "429")
+            ):
                 continue
             raise
 
@@ -180,7 +184,7 @@ def main() -> None:
                     reply = answer_question(prompt, st.session_state.vector_store, api_key)
                 except Exception as exc:
                     reply = f"Error generating response: {exc}"
-                st.markdown(reply)
+            st.markdown(reply)
 
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
