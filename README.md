@@ -1,6 +1,6 @@
 # Minimal PDF Chatbot (RAG with LangChain, FAISS & Gemini)
 
-A beginner-friendly, single-page PDF chatbot built with **Streamlit**, **LangChain**, **FAISS**, and **Google Gemini** (`gemini-2.5-flash` + `models/text-embedding-004`).
+A beginner-friendly, single-page PDF chatbot built with **Streamlit**, **LangChain**, **FAISS**, and **Google Gemini** (`gemini-3.8-flash` + `models/gemini-embedding-001`).
 
 ## Project Files
 

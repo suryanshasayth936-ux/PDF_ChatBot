@@ -15,8 +15,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # Load environment variables from a .env file if present
 load_dotenv()
 
-EMBEDDING_MODEL = "models/text-embedding-004"
-LLM_MODEL = "gemini-2.5-flash"
+EMBEDDING_MODEL = "models/gemini-embedding-001"
+LLM_MODEL = "gemini-3.8-flash"
 
 SYSTEM_PROMPT = """You are a helpful assistant answering questions strictly from the provided PDF context.
 Use only the context below to answer the user's question.
