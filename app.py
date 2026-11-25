@@ -16,7 +16,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 load_dotenv()
 
 EMBEDDING_MODEL = "models/gemini-embedding-001"
-LLM_MODEL = "gemini-3.8-flash"
+LLM_MODELS = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
+]
 
 SYSTEM_PROMPT = """You are a helpful assistant answering questions strictly from the provided PDF context.
 Use only the context below to answer the user's question.
@@ -86,14 +91,28 @@ def answer_question(question: str, vector_store: FAISS, api_key: str) -> str:
             ("human", "{question}"),
         ]
     )
-    llm = ChatGoogleGenerativeAI(
-        model=LLM_MODEL,
-        google_api_key=api_key,
-        temperature=0.2,
-    )
 
-    chain = prompt | llm | StrOutputParser()
-    return chain.invoke({"context": context, "question": question})
+    last_error: Exception | None = None
+    for model_name in LLM_MODELS:
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=api_key,
+                temperature=0.2,
+                max_retries=1,
+            )
+            chain = prompt | llm | StrOutputParser()
+            return chain.invoke({"context": context, "question": question})
+        except Exception as exc:
+            last_error = exc
+            error_text = str(exc)
+            # Fall back to the next model on transient overload/availability errors
+            if any(code in error_text for code in ("503", "UNAVAILABLE", "404", "NOT_FOUND", "429")):
+                continue
+            raise
+
+    assert last_error is not None
+    raise last_error
 
 
 def main() -> None:
